@@ -1,293 +1,47 @@
-# ASR ROVER: Multilingual Meeting Transcription
+# 🎙️ ASR ROVER — Multilingual Meeting Transcription
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.5.1-red.svg)
+![Whisper](https://img.shields.io/badge/Whisper-Large%20V3-9cf.svg)
+![NVIDIA Canary](https://img.shields.io/badge/NVIDIA%20Canary-1B-76B900.svg)
+![Pyannote](https://img.shields.io/badge/Pyannote-Community--1-orange.svg)
+![CUDA](https://img.shields.io/badge/CUDA-12.1-76B900.svg)
 
-High-accuracy multilingual speech-to-text system for long meetings with speaker diarization, combining multiple state-of-the-art ASR systems using ROVER fusion.
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Contributions](https://img.shields.io/badge/contributions-welcome-orange.svg)
 
-## Features
+<p align="center">
+  <img src="asset\signe-message-vocal.avif" alt="ASR ROVER" width="600">
+</p>
 
-- **Multi-System ASR**: Combines Whisper Large V3 (robustness) + NVIDIA Canary (accuracy)
-- **ROVER Fusion**: Confidence-weighted voting to achieve best-in-class WER (~4.5-5.5%)
-- **Speaker Diarization**: Pyannote Community-1 for accurate speaker identification
-- **Multilingual**: Optimized for English and French, supports 99+ languages via Whisper
-- **Production-Ready**: Modular architecture, extensive configuration options
-- **Multiple Output Formats**: JSON, TXT, SRT subtitle format
+---
 
-## Architecture
+## 📝 Project Description
 
-```
-┌─────────────────────────────────────────────┐
-│ 1. DIARIZATION (Pyannote Community-1)      │
-│    → Identify speakers and segments         │
-└────────────┬────────────────────────────────┘
-             │
-┌────────────▼────────────────────────────────┐
-│ 2. ASR SYSTEM 1: Whisper Large V3          │
-│    → Multilingual robustness (99 langs)    │
-└────────────┬────────────────────────────────┘
-             │
-┌────────────▼────────────────────────────────┐
-│ 3. ASR SYSTEM 2: NVIDIA Canary             │
-│    → High accuracy EN/FR/ES/DE             │
-└────────────┬────────────────────────────────┘
-             │
-┌────────────▼────────────────────────────────┐
-│ 4. ROVER FUSION                             │
-│    → Confidence-weighted voting             │
-│    → Word-level alignment                   │
-│    → Best output selection                  │
-└────────────┬────────────────────────────────┘
-             │
-┌────────────▼────────────────────────────────┐
-│ 5. FINAL TRANSCRIPTION                      │
-│    → Speaker-labeled segments               │
-│    → Timestamps & confidence scores         │
-└─────────────────────────────────────────────┘
-```
+A high-accuracy **multilingual speech-to-text** pipeline for long meetings, combining several state-of-the-art ASR systems with **ROVER fusion** for best-in-class WER. The system performs **speaker diarization** with Pyannote Community-1, then transcribes with both **Whisper Large V3** (robustness, 99 languages) and **NVIDIA Canary** (high accuracy on EN/FR/ES/DE), and finally fuses the outputs through **confidence-weighted voting**.
 
-## Performance Benchmarks
+This project was created to explore **mixture-of-experts** ideas applied to ASR — instead of relying on a single model, the pipeline lets each system do what it does best and arbitrates word-by-word at the end. It also gave me a reason to dig into the **ROVER algorithm (NIST)** and word-level alignment.
 
-Based on 2025 state-of-the-art models:
+---
 
-| Component | Model | WER | Speed (RTFx) |
-|-----------|-------|-----|--------------|
-| ASR 1 | Whisper Large V3 | ~7-8% | 68x |
-| ASR 2 | NVIDIA Canary Qwen 2.5B | ~5.6% | 418x |
-| **ROVER Fusion** | **Combined** | **~4.5-5.5%** | **~240x** |
-| Diarization | Pyannote Community-1 | ~10% DER | 2.5% RTFx |
+## ⚙️ Features
+  🤖 **Multi-system ASR** combining Whisper Large V3 and NVIDIA Canary Qwen 2.5B
 
-## Installation
+  🗳️ **ROVER fusion** with confidence-weighted voting at word level (~4.5–5.5% WER target)
 
-### Prerequisites
+  👥 **Speaker diarization** through Pyannote Community-1 (auto-detect or fixed speaker count)
 
-- Python 3.8+
-- ~5GB disk space (for models)
-- HuggingFace account (free - for Pyannote models)
-- Optional: CUDA-capable GPU (8GB+ VRAM for faster processing)
+  🌍 **Multilingual** — optimized for English and French, 99+ languages via Whisper
 
-### 🚀 Automated Installation (Recommended)
+  🧩 **Modular architecture** — Whisper-only mode if NeMo dependencies cause conflicts
 
-```bash
-# Clone repository
-git clone https://github.com/Thibault-GAREL/ASR-Mixture_of_expert-ROVER.git
-cd ASR-Mixture_of_expert-ROVER
+  📄 **Multiple output formats** — JSON, TXT, and SRT subtitles with timestamps
 
-# Run automated installation script
-bash install_dependencies.sh
+  ⚡ **CPU & GPU support** — CUDA-ready for fast inference, fallback CPU config provided
 
-# Configure HuggingFace token
-python setup_token.py
+---
 
-# Generate test audio and verify installation
-python generate_test_audio.py
-python test_diarization_fix.py
-```
-
-### Manual Installation
-
-```bash
-# Create virtual environment (recommended)
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies (Whisper-only, no conflicts)
-pip install -r requirements-whisper-only.txt
-
-# Clear Python cache (important!)
-find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null
-find . -type f -name "*.pyc" -delete 2>/dev/null
-
-# Configure HuggingFace token
-python setup_token.py
-```
-
-### Full Install with Canary (Advanced)
-
-⚠️ **Note:** NeMo has strict dependency requirements and may conflict with other packages.
-
-```bash
-pip install -r requirements-full.txt
-```
-
-For troubleshooting, see:
-- **[QUICK_START.md](QUICK_START.md)** - Complete quick start guide
-- **[FIX_CACHE_PYTHON.md](FIX_CACHE_PYTHON.md)** - Fix Python cache issues
-- **[WINDOWS-GUIDE.md](WINDOWS-GUIDE.md)** - Windows-specific instructions
-
-### HuggingFace Configuration
-
-You must accept the licenses for these Pyannote models:
-1. https://huggingface.co/pyannote/speaker-diarization-3.1
-2. https://huggingface.co/pyannote/segmentation-3.0
-3. https://huggingface.co/pyannote/speaker-diarization-community-1
-4. https://huggingface.co/pyannote/wespeaker-voxceleb-resnet34-LM
-5. https://huggingface.co/pyannote/VoiceActivityDetection-PyanNet-ONNX
-
-Then run:
-```bash
-python setup_token.py  # Interactive token setup
-python diagnostic_hf.py  # Verify access to all models
-```
-
-## Quick Start
-
-### Basic Usage
-
-```python
-from src.pipeline import MeetingTranscriptionPipeline
-
-# Initialize pipeline
-pipeline = MeetingTranscriptionPipeline()
-
-# Transcribe meeting
-result = pipeline.transcribe(
-    audio_path="meeting.wav",
-    language=None,  # Auto-detect
-    num_speakers=None  # Auto-detect
-)
-
-# Access results
-print(f"Duration: {result.duration}s")
-print(f"Speakers: {result.speakers}")
-print(f"Language: {result.language}")
-
-for segment in result.segments:
-    print(f"[{segment.speaker}]: {segment.text}")
-
-# Save results
-pipeline.save_results(
-    transcription=result,
-    output_dir="output",
-    formats=["json", "txt", "srt"]
-)
-```
-
-### Command-Line Interface
-
-```bash
-# Transcribe with auto-detection
-python examples/cli_transcribe.py meeting.wav
-
-# Specify language and speakers
-python examples/cli_transcribe.py meeting.wav \
-    --language fr \
-    --num-speakers 3 \
-    --output results/
-
-# Use Whisper only (no Canary/ROVER)
-python examples/cli_transcribe.py meeting.wav --whisper-only
-
-# Custom output formats
-python examples/cli_transcribe.py meeting.wav --formats json txt srt
-```
-
-## Configuration
-
-### Using Config File
-
-Edit `configs/config.yaml`:
-
-```yaml
-diarization:
-  model_name: "pyannote/speaker-diarization-3.1"
-  min_speakers: 2
-  max_speakers: 10
-
-whisper:
-  model_size: "large-v3"
-  device: "cuda"
-  compute_type: "float16"
-  beam_size: 5
-
-canary:
-  model_name: "nvidia/canary-1b"
-  device: "cuda"
-
-rover:
-  voting_method: "confidence_weighted"
-  confidence_weights:
-    whisper: 1.0
-    canary: 1.2  # Higher weight for better accuracy
-```
-
-### Programmatic Configuration
-
-```python
-pipeline = MeetingTranscriptionPipeline(
-    diarizer_config={
-        "model_name": "pyannote/speaker-diarization-3.1",
-        "device": "cuda",
-        "min_speakers": 2,
-        "max_speakers": 5
-    },
-    whisper_config={
-        "model_size": "large-v3",
-        "compute_type": "float16"
-    },
-    canary_config={
-        "model_name": "nvidia/canary-1b"
-    },
-    rover_config={
-        "voting_method": "confidence_weighted",
-        "confidence_weights": {"whisper": 1.0, "canary": 1.3}
-    }
-)
-```
-
-## Examples
-
-See **[QUICK_START.md](QUICK_START.md)** for comprehensive usage guide.
-
-### 1. Interactive Examples Menu
-```bash
-python examples/basic_usage.py
-```
-
-This provides an interactive menu with 6 different examples:
-- Simple transcription
-- Transcription with speaker identification
-- Saving results to JSON
-- Forcing specific language
-- Batch processing multiple files
-- Custom configuration
-
-### 2. Command-Line Interface
-```bash
-# Basic transcription with auto-detection
-python examples/cli_transcribe.py meeting.wav --whisper-only
-
-# Specify language and speakers
-python examples/cli_transcribe.py meeting.wav \
-    --language fr \
-    --num-speakers 3 \
-    --whisper-only
-
-# Custom output file
-python examples/cli_transcribe.py meeting.wav --output results/transcript.json
-```
-
-### 3. Programmatic Usage
-```python
-from src.pipeline import TranscriptionPipeline
-
-# Initialize (Whisper-only mode recommended)
-pipeline = TranscriptionPipeline(
-    config_path="configs/config.yaml",
-    whisper_only=True
-)
-
-# Transcribe
-result = pipeline.transcribe("meeting.wav")
-
-# Access results
-print(f"Text: {result.text}")
-print(f"Language: {result.language}")
-for seg in result.segments:
-    print(f"[{seg.speaker}] {seg.text}")
-```
-
-## Output Formats
+## Example Outputs
 
 ### JSON
 ```json
@@ -301,7 +55,6 @@ for seg in result.segments:
       "confidence": 0.95
     }
   ],
-  "full_text": "...",
   "speakers": ["SPEAKER_00", "SPEAKER_01"],
   "duration": 3600.5,
   "language": "en"
@@ -323,7 +76,7 @@ SPEAKER_01 [5.50s - 12.30s]:
 Thank you for having me.
 ```
 
-### SRT (Subtitles)
+### SRT
 ```
 1
 00:00:00,000 --> 00:00:05,200
@@ -334,206 +87,158 @@ Thank you for having me.
 [SPEAKER_01] Thank you for having me.
 ```
 
-## Project Structure
+### 📝 Notes & Observations
 
-```
-ASR-Mixture_of_expert-ROVER/
+| Component | Model | WER | Speed (RTFx) |
+|-----------|-------|-----|--------------|
+| ASR 1 | Whisper Large V3 | ~7–8% | 68× |
+| ASR 2 | NVIDIA Canary Qwen 2.5B | ~5.6% | 418× |
+| **ROVER Fusion** | **Combined** | **~4.5–5.5%** | **~240×** |
+| Diarization | Pyannote Community-1 | ~10% DER | 2.5% RTFx |
+
+---
+
+## ⚙️ How it works
+  🎧 The audio file is loaded and resampled to 16 kHz mono through the audio utils.
+
+  👁️ **Pyannote Community-1** segments the file into speaker turns (who-spoke-when).
+
+  🧠 **Whisper Large V3** transcribes each segment with multilingual robustness.
+
+  🧠 **NVIDIA Canary** transcribes the same segments with higher accuracy on EN/FR/ES/DE.
+
+  🗳️ The **ROVER fusion** module aligns words across the two hypotheses and votes per word, weighted by each system's confidence.
+
+  🧾 Final segments are reassembled with their speaker labels, timestamps and confidence scores.
+
+  💾 Results are exported to JSON, TXT and SRT — pick whichever fits your downstream tool.
+
+---
+
+## 🗺️ Architecture Diagram
+
+The pipeline is a **mixture-of-experts** style architecture: diarization first, then parallel ASR systems, then word-level ROVER fusion.
+
+![Architecture Diagram](img/architecture.svg)
+
+**Key components:**
+- Diarizer: `pyannote/speaker-diarization-community-1`
+- ASR 1: `openai/whisper-large-v3` (beam_size = 5, float16)
+- ASR 2: `nvidia/canary-1b` (greedy decoding)
+- Fusion: confidence-weighted ROVER (weights: whisper = 1.0, canary = 1.2)
+
+---
+
+## 📂 Repository structure
+```bash
 ├── configs/
-│   └── config.yaml                 # Configuration file
+│   ├── config.yaml                 # Default config (GPU)
+│   ├── config-cpu.yaml              # CPU-only config
+│   └── config-windows-cpu.yaml      # Windows CPU config
+│
 ├── src/
 │   ├── asr/
-│   │   ├── base_asr.py            # Base ASR interface
-│   │   ├── whisper_asr.py         # Whisper implementation
-│   │   └── canary_asr.py          # Canary implementation
+│   │   ├── base_asr.py              # Common ASR interface
+│   │   ├── whisper_asr.py           # Whisper Large V3 wrapper
+│   │   └── canary_asr.py            # NVIDIA Canary wrapper
 │   ├── diarization/
-│   │   └── pyannote_diarizer.py   # Speaker diarization
+│   │   └── pyannote_diarizer.py     # Pyannote speaker diarization
 │   ├── rover/
-│   │   └── rover_fusion.py        # ROVER fusion system
+│   │   └── rover_fusion.py          # ROVER word-level fusion
 │   ├── utils/
-│   │   ├── audio_utils.py         # Audio processing
-│   │   └── config_loader.py       # Config management
-│   └── pipeline.py                 # Main pipeline
+│   │   ├── audio_utils.py           # Audio loading & resampling
+│   │   └── config_loader.py         # YAML config loader
+│   └── pipeline.py                  # Main MeetingTranscriptionPipeline
+│
 ├── examples/
+│   ├── basic_usage.py               # Interactive examples menu
 │   ├── basic_transcription.py
 │   ├── custom_config.py
 │   ├── whisper_only.py
-│   └── cli_transcribe.py
+│   └── cli_transcribe.py            # Command-line entry point
+│
 ├── data/
-│   ├── input/                      # Place audio files here
-│   └── output/                     # Transcription outputs
+│   ├── input/                       # Place your audio files here
+│   └── output/                      # Generated transcriptions
+│
+├── tests/
+├── setup_token.py                   # HuggingFace token setup
+├── diagnostic_hf.py                 # HF access diagnostic
+├── generate_test_audio.py           # Generate test WAV files
+├── install_dependencies.sh
 ├── requirements.txt
-├── setup.py
+├── requirements-whisper-only.txt
+├── requirements-full.txt
+│
+├── LICENSE
 └── README.md
 ```
 
-## Advanced Usage
+---
 
-### Custom ROVER Voting
-
-```python
-from src.rover.rover_fusion import ROVERFusion
-
-rover = ROVERFusion(
-    voting_method="confidence_weighted",
-    confidence_weights={
-        "whisper": 1.0,
-        "canary": 1.5  # Prioritize Canary
-    },
-    min_confidence_threshold=0.2,
-    word_error_tolerance=0.15
-)
-```
-
-### Speaker Diarization Only
-
-```python
-from src.diarization.pyannote_diarizer import PyannoteDiarizer
-
-diarizer = PyannoteDiarizer(
-    model_name="pyannote/speaker-diarization-3.1",
-    device="cuda"
-)
-
-segments = diarizer.diarize("audio.wav", min_speakers=2, max_speakers=5)
-
-for seg in segments:
-    print(f"{seg.speaker}: {seg.start:.2f}s - {seg.end:.2f}s")
-```
-
-### ASR Only (No Diarization)
-
-```python
-from src.asr.whisper_asr import WhisperASR
-
-whisper = WhisperASR(model_size="large-v3", device="cuda")
-result = whisper.transcribe("audio.wav", language="fr")
-
-print(result.text)
-print(f"Confidence: {result.confidence}")
-```
-
-## Troubleshooting
-
-**See [FIX_CACHE_PYTHON.md](FIX_CACHE_PYTHON.md) for detailed troubleshooting guide.**
-
-### Issue: DiarizeOutput AttributeError
-**Symptom**: `AttributeError: 'DiarizeOutput' object has no attribute 'itertracks'`
-
-**Solution**: Clear Python cache
+## 💻 Run it on Your PC
+Clone the repository and install dependencies:
 ```bash
-find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null
-find . -type f -name "*.pyc" -delete 2>/dev/null
-# Restart your terminal/IDE, then retry
-```
+git clone https://github.com/Thibault-GAREL/ASR-Mixture_of_expert-ROVER.git
+cd ASR-Mixture_of_expert-ROVER
 
-### Issue: HuggingFace 401 Unauthorized
-**Solution**: Accept model licenses and set token
-```bash
-python diagnostic_hf.py  # Identifies which licenses you're missing
-python setup_token.py    # Set up your HF token
-```
+python -m venv .venv # if you don't have a virtual environment
+source .venv/bin/activate   # Linux / macOS
+.venv\Scripts\activate      # Windows
 
-### Issue: CUDA Out of Memory
-**Solution**: Use CPU or reduce model sizes
-```yaml
-# In config.yaml
-whisper:
-  device: "cpu"
-  compute_type: "int8"
-  model_size: "medium"  # Instead of "large-v3"
-```
-
-### Issue: Slow Processing on CPU
-**Solution**:
-- Use smaller Whisper model: `medium` instead of `large-v3`
-- Reduce beam size: `beam_size: 1` (faster, slightly less accurate)
-- Use Whisper-only mode (skip ROVER fusion)
-
-### Issue: Dependency Conflicts with NeMo
-**Solution**: Use Whisper-only mode
-```bash
 pip install -r requirements-whisper-only.txt
-python examples/cli_transcribe.py audio.wav --whisper-only
 ```
 
-## Helper Tools
+⚠️ For **maximum speed**, a **CUDA-compatible GPU** (8 GB+ VRAM) is strongly recommended. CPU mode works but is significantly slower on long meetings.
 
-The repository includes several diagnostic and setup tools:
+### HuggingFace setup
 
-| Tool | Purpose |
-|------|---------|
-| `setup_token.py` | Interactive HuggingFace token setup |
-| `diagnostic_hf.py` | Diagnose HuggingFace access issues |
-| `generate_test_audio.py` | Generate test WAV files |
-| `test_diarization_fix.py` | Test diarization module |
-| `install_dependencies.sh` | Automated dependency installation |
-| `examples/basic_usage.py` | Interactive examples menu |
-
-## Performance Tuning
-
-### For Maximum Accuracy
-```python
-whisper_config={"model_size": "large-v3", "beam_size": 10}
-rover_config={"confidence_weights": {"canary": 1.5}}
+You must accept the licenses for these Pyannote models on HuggingFace, then configure your token:
+```bash
+python setup_token.py    # interactive token setup
+python diagnostic_hf.py  # verify access to all required models
 ```
 
-### For Maximum Speed
-```python
-whisper_config={"model_size": "medium", "compute_type": "int8"}
-use_canary=False  # Skip ROVER fusion
+Required model licenses:
+- `pyannote/speaker-diarization-3.1`
+- `pyannote/segmentation-3.0`
+- `pyannote/speaker-diarization-community-1`
+- `pyannote/wespeaker-voxceleb-resnet34-LM`
+- `pyannote/VoiceActivityDetection-PyanNet-ONNX`
+
+### Run the pipeline
+
+```bash
+# Interactive examples menu
+python examples/basic_usage.py
+
+# Command-line transcription with auto-detection
+python examples/cli_transcribe.py meeting.wav
+
+# Force language and number of speakers
+python examples/cli_transcribe.py meeting.wav --language fr --num-speakers 3 --output results/
+
+# Whisper-only mode (no Canary, no NeMo dependencies)
+python examples/cli_transcribe.py meeting.wav --whisper-only
 ```
 
-### For Balanced Performance
-```python
-whisper_config={"model_size": "large-v3", "compute_type": "float16"}
-canary_config={"decode_method": "greedy"}
+### Full install with Canary (advanced)
+
+⚠️ NeMo has strict dependency requirements and may conflict with other packages.
+```bash
+pip install -r requirements-full.txt
 ```
 
-## Citation
+For Windows / CUDA / cache troubleshooting, see [WINDOWS_CUDA_GUIDE.md](WINDOWS_CUDA_GUIDE.md), [WINDOWS-GUIDE.md](WINDOWS-GUIDE.md), [INSTALL_ROVER.md](INSTALL_ROVER.md) and [FIX_CACHE_PYTHON.md](FIX_CACHE_PYTHON.md).
 
-If you use this project in your research, please cite:
+---
 
-```bibtex
-@software{asr_rover_2025,
-  title={ASR ROVER: Multilingual Meeting Transcription with Multi-System Fusion},
-  author={Your Name},
-  year={2025},
-  url={https://github.com/yourusername/ASR-Mixture_of_expert-ROVER}
-}
-```
+## 📖 Inspiration / Sources
+This project is based on:
+- 📄 [ROVER Algorithm (NIST)](https://ieeexplore.ieee.org/document/659110/) — Fiscus, 1997
+- 🤗 [Whisper (OpenAI)](https://github.com/openai/whisper) and [faster-whisper](https://github.com/guillaumekln/faster-whisper)
+- 🟢 [NVIDIA Canary](https://developer.nvidia.com/blog/new-standard-for-speech-recognition-and-translation-from-the-nvidia-nemo-canary-model/)
+- 🗣️ [Pyannote.audio](https://github.com/pyannote/pyannote-audio)
+- 🏆 [Open ASR Leaderboard](https://huggingface.co/spaces/hf-audio/open_asr_leaderboard)
 
-## References
-
-- [Whisper (OpenAI)](https://github.com/openai/whisper)
-- [faster-whisper](https://github.com/guillaumekln/faster-whisper)
-- [NVIDIA Canary](https://developer.nvidia.com/blog/new-standard-for-speech-recognition-and-translation-from-the-nvidia-nemo-canary-model/)
-- [Pyannote.audio](https://github.com/pyannote/pyannote-audio)
-- [ROVER Algorithm (NIST)](https://ieeexplore.ieee.org/document/659110/)
-- [Open ASR Leaderboard](https://huggingface.co/spaces/hf-audio/open_asr_leaderboard)
-
-## License
-
-MIT License - see [LICENSE](LICENSE) file for details
-
-## Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## Support
-
-- Issues: [GitHub Issues](https://github.com/yourusername/ASR-Mixture_of_expert-ROVER/issues)
-- Documentation: See `examples/` directory
-- Email: your.email@example.com
-
-## Acknowledgments
-
-- OpenAI for Whisper
-- NVIDIA for Canary/NeMo
-- Pyannote team for speaker diarization
-- HuggingFace for model hosting and Open ASR Leaderboard
+Code created by me 😎, Thibault GAREL - [Github](https://github.com/Thibault-GAREL)

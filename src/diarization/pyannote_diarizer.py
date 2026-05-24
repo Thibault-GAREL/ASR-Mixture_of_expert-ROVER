@@ -184,7 +184,7 @@ class PyannoteDiarizer:
                 diarization = diarization_output.speaker_diarization
             elif hasattr(diarization_output, 'diarization'):
                 # Fallback for older versions
-                diarization = diarization_output.diarization
+                diarization = diarization_output.speaker_diarization
             else:
                 # Already an Annotation object
                 diarization = diarization_output
